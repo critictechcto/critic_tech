@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="./dist/css/style.css">
 
  <!-- ✅ Correct Clerk setup for static sites -->
+
+<!-- Clerk SDK -->
 <script
   async
   crossorigin="anonymous"
@@ -18,27 +20,54 @@
 </script>
 
 <script>
-  window.addEventListener("load", async () => {
-    if (!window.Clerk) {
-      console.error("❌ Clerk SDK not loaded.");
-      return;
-    }
+window.addEventListener("load", async () => {
+  const signInBtn = document.getElementById("signInBtn");
+  const signOutBtn = document.getElementById("signOutBtn");
+
+  const initClerk = async () => {
+    if (!window.Clerk || typeof window.Clerk.load !== "function") return setTimeout(initClerk, 100);
 
     try {
       await window.Clerk.load();
 
-      console.log("✅ Clerk initialized successfully");
-
+      // --- Sign-in modal ---
       window.openSignInWidget = () => {
-        window.Clerk.openSignIn({
-          afterSignInUrl: window.location.href,
-        });
+        window.Clerk.openSignIn({ afterSignInUrl: window.location.href });
       };
+
+      // --- Sign-out function ---
+      window.signOutUser = async () => {
+        await window.Clerk.signOut();
+        toggleButtons(false);
+      };
+
+      // --- Toggle visibility ---
+      const toggleButtons = (isSignedIn) => {
+        if (isSignedIn) {
+          signInBtn?.classList.add("d-none");
+          signOutBtn?.classList.remove("d-none");
+        } else {
+          signOutBtn?.classList.add("d-none");
+          signInBtn?.classList.remove("d-none");
+        }
+      };
+
+      // --- Initial state ---
+      toggleButtons(!!window.Clerk.user);
+
+      // --- React to changes ---
+      window.Clerk.addListener(({ user }) => toggleButtons(!!user));
+
     } catch (err) {
-      console.error("❌ Clerk failed to initialize:", err);
+      console.error("Clerk failed to initialize:", err);
     }
-  });
+  };
+
+  initClerk();
+});
 </script>
+
+
 
 </head>
 <body>
@@ -75,9 +104,17 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="#my_protfolio">Portfolio </a>
                             </li>
-                            <li class="nav-item">
+                            <!-- <li class="nav-item">
                             <a class="nav-link" href="#" onclick="openSignInWidget()">Sign In</a>
+                            </li> -->
+                             <li class="nav-item">
+                                 <a class="nav-link d-none" id="signOutBtn" href="#" onclick="signOutUser()">Logout</a>
                             </li>
+                            <li class="nav-item">
+                            <a class="nav-link" id="signInBtn" href="#" onclick="openSignInWidget()">Sign In</a>
+                            <a class="nav-link d-none" id="signOutBtn" href="#" onclick="signOutUser()">Logout</a>
+                            </li>
+
 
                             
                             <!-- <li class="nav-item">
